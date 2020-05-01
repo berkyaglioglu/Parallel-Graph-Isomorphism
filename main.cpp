@@ -69,19 +69,38 @@ public:
 	
 	void ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet, int vertexIdG1)
 	{
-		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
-			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end(); setItr++) {
-				int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
-				if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist){
-					possibleMapSet[vertexId].erase(*setItr);
-				}
-				
-			}
+		vector<int> vertexQueue;
+		vertexQueue.push_back(vertexIdG1);
+		int vertexIdG2;
 
-		}		
+		// BFS implemented, this part ends when the vertexQueue is processed completely
+		for (int i = 0; i < vertexQueue.size(); i++) {
+			vertexIdG1 = vertexQueue[i];
+			vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
+
+			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
+				for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
+					int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
+					if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist) {
+						unordered_set<int>::iterator tempSetItr = setItr;
+						setItr++;
+						possibleMapSet[vertexId].erase(*setItr);
+					}
+					else {
+						setItr++;
+					}
+				}
+				// When there is a certain map, the vertex is added to the vertexQueue
+				if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
+					remainingVertexSet.erase(vertexId);
+					vertexQueue.push_back(vertexId);
+				}
+			}
+		}
+		
 	}
 
+	
 
 	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
@@ -93,6 +112,7 @@ public:
 		if (remainingVertexSet.size() == 0) { // if we map all the vertices
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
 				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
+				isomorphismFound = true;
 			}
 			return true;
 		}
@@ -119,19 +139,7 @@ public:
 		return false;
 	}
 	
-	void ProcessPossibleMapSet(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet){
-			// process posibleMapSet
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
-				remainingVertexSet.erase(vertexId);
-				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
-				ProcessPossibleMapSet(possibleMapSet, remainingVertexSet);
-			}
-
-		}
-		return;
-
-	}
+	
 	void Solve()
 	{
 		vector< unordered_set<int> > possibleMapSet(numberOfVertices);
@@ -188,8 +196,15 @@ public:
 		graph1.SetShortestPathAllVertices();
 		graph2.SetShortestPathAllVertices();
 
-		ProcessPossibleMapSet(possibleMapSet, remainingVertexSet);
 
+		// process possibleMapSet
+		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
+			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
+				remainingVertexSet.erase(vertexId);
+				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
+				break;
+			}
+		}
 
 
 		if (CheckForViolation(possibleMapSet)) {
@@ -198,7 +213,7 @@ public:
 
 		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
 		if (remainingVertexSet.size() != 0) {
-			bool c=BruteForce(possibleMapSet, remainingVertexSet);
+			BruteForce(possibleMapSet, remainingVertexSet);
 		}
 
 	}
