@@ -70,6 +70,16 @@ public:
 	void ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet, int vertexIdG1)
 	{
 		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
+		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
+			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end(); setItr++) {
+				int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
+				if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist){
+					possibleMapSet[vertexId].erase(*setItr);
+				}
+				
+			}
+
+		}		
 	}
 
 
@@ -108,8 +118,20 @@ public:
 
 		return false;
 	}
+	
+	void ProcessPossibleMapSet(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet){
+			// process posibleMapSet
+		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
+			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
+				remainingVertexSet.erase(vertexId);
+				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
+				ProcessPossibleMapSet(possibleMapSet, remainingVertexSet);
+			}
 
+		}
+		return;
 
+	}
 	void Solve()
 	{
 		vector< unordered_set<int> > possibleMapSet(numberOfVertices);
@@ -166,18 +188,9 @@ public:
 		graph1.SetShortestPathAllVertices();
 		graph2.SetShortestPathAllVertices();
 
+		ProcessPossibleMapSet(possibleMapSet, remainingVertexSet);
 
-		// process posibleMapSet
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-			/*
-			if map bulduklarımız için, 
-				shortestpath i kullanarak bütün diğer setleri eliminate edebilecğimiz var mı diye kontrol et
-			*/
-			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
-				remainingVertexSet.erase(vertexId);
-				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
-			}
-		}
+
 
 		if (CheckForViolation(possibleMapSet)) {
 			return;
@@ -191,14 +204,6 @@ public:
 	}
 
 };
-
-
-
-
-
-
-
-
 
 
 
