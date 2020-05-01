@@ -45,7 +45,7 @@ public:
 private: 
 	int floyd(int edge, int edge1 , int edge2){
 		//If there is no any path and other edge
-		if((edge == -1 && edge1 == -1) || (edge == -1 && edge2 == -2) ){
+		if((edge == -1 && edge1 == -1) || (edge == -1 && edge2 == -1) ){
 			return -1;
 		}
 		//There is no any path until now 
@@ -110,7 +110,7 @@ public:
 					if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist) {
 						unordered_set<int>::iterator tempSetItr = setItr;
 						setItr++;
-						possibleMapSet[vertexId].erase(*setItr);
+						possibleMapSet[vertexId].erase(*tempSetItr);
 					}
 					else {
 						setItr++;
