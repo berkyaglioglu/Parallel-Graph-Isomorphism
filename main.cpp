@@ -1,3 +1,4 @@
+#include "graphio.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -16,10 +17,13 @@ class Graph
 public:
 	vector<vector<int>> edges;
 	vector<vector<int>> shortestPathAllVertices;
+	int numberOfVertices;
 
-	Graph(int numberOfVertices) 
-	{
+	Graph(int numVertices) 
+	{	
+		numberOfVertices = numVertices;
 		edges = vector<vector<int>>(numberOfVertices);
+		
 
 		/*
 		set edges here from the input data that comes with parameter
@@ -29,6 +33,12 @@ public:
 		for (int i=0; i < numberOfVertices; i++) {
 			shortestPathAllVertices[i] = vector<int>(numberOfVertices);
 		}
+	}
+	
+	void fillEdges(string filename, bool first = true)
+	{
+		if (first)
+		readEdges1(filename, edges);
 	}
 
 	void SetShortestPathAllVertices() 

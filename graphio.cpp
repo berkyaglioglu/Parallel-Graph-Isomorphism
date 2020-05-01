@@ -1,3 +1,4 @@
+#include "graphio.h"
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -7,8 +8,8 @@
 #include <stdlib.h>
 
 using namespace std;
-#read both both graphs in a file. edges1-2 should have size n.
-#result: edges1-2 are filled. edges[i] is the list of vertices i is adjacent to.
+//read both both graphs in a file. edges1-2 should have size n.
+//result: edges1-2 are filled. edges[i] is the list of vertices i is adjacent to.
 void readEdges(string filename,vector<vector<int> >& edges1, vector<vector<int> >& edges2 )
 {
   ifstream ifs(filename.c_str());
@@ -64,7 +65,7 @@ void readEdges(string filename,vector<vector<int> >& edges1, vector<vector<int> 
 
 }
 
-#works exactly like readEdges, just reads the first graphs in the file.
+//works exactly like readEdges, just reads the first graphs in the file.
 void readEdges1(string filename, vector<vector<int> >& edges)
 {
   ifstream ifs(filename.c_str());
