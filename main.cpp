@@ -73,7 +73,7 @@ public:
 	}
 
 
-	void BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
+	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
 		/* In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
 		if (isomorphismFound) {
@@ -87,14 +87,14 @@ public:
 			return true;
 		}
 
-		int vertexIdG1 = *remainingVertexSet.begin()
+		int vertexIdG1 = *remainingVertexSet.begin();
 
-		for (unordered_set<int>::iterator setIt = possibleMapSet[vertexIdG1].begin(); setIt != possibleMapSet[vertexIdG1].end(); setIt++) {
+		for (unordered_set<int>::iterator setItr = possibleMapSet[vertexIdG1].begin(); setItr != possibleMapSet[vertexIdG1].end(); setItr++) {
 			vector< unordered_set<int> > tempPossibleMapSet = possibleMapSet;
 			unordered_set<int> tempRemainingVertexSet = remainingVertexSet;
 
 			tempPossibleMapSet[vertexIdG1].clear();
-			tempPossibleMapSet[vertexIdG1].insert(*setIt);
+			tempPossibleMapSet[vertexIdG1].insert(*setItr);
 			tempRemainingVertexSet.erase(vertexIdG1);
 			ShortestPathFilter(tempPossibleMapSet, tempRemainingVertexSet, vertexIdG1);
 
@@ -109,7 +109,7 @@ public:
 		return false;
 	}
 
-	
+
 	void Solve()
 	{
 		vector< unordered_set<int> > possibleMapSet(numberOfVertices);
@@ -122,23 +122,24 @@ public:
 
 		// check iso olabilir mi, aynı degreeler 2 graph'ta aynı sayıda node'a sahip olmalı.
 		unordered_map< int, pair< unordered_set<int>, unordered_set<int> > > degreeVerticesTable;
+		unordered_map< int, pair< unordered_set<int>, unordered_set<int> > >::iterator mapItr;
 		pair<unordered_set<int>,unordered_set<int>> pairOfSets;
 		int degree;
 
 		for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
 			degree = graph1.edges[vertexId].size();
 			if (degreeVerticesTable.find(degree) == degreeVerticesTable.end()) { // if degree has not been inserted into hash table before
-				degreeVerticesTable.insert({degree, pairOfSets})
+				degreeVerticesTable.insert({degree, pairOfSets});
 			}
-			auto it = degreeVerticesTable.find(degree);
-			(it->second).first.insert(vertexId); // insert node id for the first graph
+			mapItr = degreeVerticesTable.find(degree);
+			(mapItr->second).first.insert(vertexId); // insert node id for the first graph
 
 			degree = graph2.edges[vertexId].size();
 			if (degreeVerticesTable.find(degree) == degreeVerticesTable.end()) { // if degree has not been inserted into hash table before
-				degreeVerticesTable.insert({degree, pairOfSets})
+				degreeVerticesTable.insert({degree, pairOfSets});
 			}
-			auto it = degreeVerticesTable.find(degree);
-			(it->second).second.insert(vertexId); // insert node id for the second graph
+			mapItr = degreeVerticesTable.find(degree);
+			(mapItr->second).second.insert(vertexId); // insert node id for the second graph
 		}
 		
 
@@ -146,13 +147,13 @@ public:
 		//possibleMapSet set et
 		unordered_set<int> verticesG1;
 		unordered_set<int> verticesG2;
-		for (auto mapIt = degreeVerticesTable.begin(); mapIt != degreeVerticesTable.end(); mapIt++) {
-			verticesG1 = (mapIt->second).first;
-			verticesG2 = (mapIt->second).second;
+		for (mapItr = degreeVerticesTable.begin(); mapItr != degreeVerticesTable.end(); mapItr++) {
+			verticesG1 = (mapItr->second).first;
+			verticesG2 = (mapItr->second).second;
 			if (verticesG1.size() == verticesG2.size()) {
-				for (unordered_set<int>::iterator setIt = verticesG1.begin(); setIt != verticesG1.end(); setIt++) {
-					possibleMapSet[*setIt] = verticesG2;
-					remainingVertexSet.insert(*setIt)
+				for (unordered_set<int>::iterator setItr = verticesG1.begin(); setItr != verticesG1.end(); setItr++) {
+					possibleMapSet[*setItr] = verticesG2;
+					remainingVertexSet.insert(*setItr);
 				}
 			}
 			else {
@@ -184,7 +185,7 @@ public:
 
 		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
 		if (remainingVertexSet.size() != 0) {
-			BruteForce();
+			bool c=BruteForce(possibleMapSet, remainingVertexSet);
 		}
 
 	}
@@ -207,8 +208,8 @@ int main()
 	//Take input data and set graph1 and graph2 accordingly
 	int numberOfVertices = 10;
 
-	Graph g1(size);
-	Graph g2(size);
+	Graph g1(numberOfVertices);
+	Graph g2(numberOfVertices);
 
 	GraphMapper graphMapper(g1, g2);
 
