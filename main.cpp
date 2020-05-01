@@ -22,8 +22,6 @@ public:
 	{	
 		numberOfVertices = numVertices;
 		edges = vector<vector<int>>(numberOfVertices);
-		
-
 		/*
 		set edges here from the input data that comes with parameter
 		*/
@@ -41,15 +39,19 @@ public:
 	}
 
 	void SetShortestPathAllVertices() 
-	{
+	{	
+		this->shortestPathAllVertices = this->edges;
 		// set shortestPathAllVertices by using edges
-		for(int k=0; k<numberOfVertices; k++){
-			for(int i=0; i<numberOfVertices; i++){
-				for(int j=0; j<numberOfVertices; j++){
-					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
+		int numOfThreads = get_num_threads();
+		int t = numOfThreads/2 - 1 ;
+		#pragma omp parallel for num_threads(t) schedule(static) shared(shortestPathAllVertices) collapse(3)
+			for(int k=0; k<numberOfVertices; k++){
+				for(int i=0; i<numberOfVertices; i++){
+					for(int j=0; j<numberOfVertices; j++){
+						shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
+					}
 				}
-			}
-		}
+			}	
 	}
 private: 
 	int floyd(int edge, int edge1 , int edge2){
@@ -116,7 +118,7 @@ public:
 		for (int i = 0; i < vertexQueue.size(); i++) {
 			vertexIdG1 = vertexQueue[i];
 			vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
-
+			#pragma omp parallel for shared(vertexQueue, possibleMapSet)
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
 				for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
 					int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
@@ -131,15 +133,16 @@ public:
 				}
 				// When there is a certain map, the vertex is added to the vertexQueue
 				if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
+					#pragma omp critical
+					{
 					remainingVertexSet.erase(vertexId);
 					vertexQueue.push_back(vertexId);
+					}
 				}
 			}
 		}
 		
-	}
-
-	
+	}	
 
 	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
@@ -232,9 +235,17 @@ public:
 		}
 
 		//graph1.SetShortestPathAllVertices ve graph2.SetShortestPathAllVertices
-		graph1.SetShortestPathAllVertices();
-		graph2.SetShortestPathAllVertices();
+		#pragma omp parallel num_threads(2)
+		{
+			#pragma omp single
+			{
+				#pragma omp task
+				graph1.SetShortestPathAllVertices();
+				#pragma omp task
+				graph2.SetShortestPathAllVertices();
 
+			}
+		}
 
 		// process possibleMapSet
 		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
