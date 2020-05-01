@@ -118,7 +118,7 @@ public:
 		for (int i = 0; i < vertexQueue.size(); i++) {
 			vertexIdG1 = vertexQueue[i];
 			vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
-
+			#pragma omp parallel for shared(vertexQueue, possibleMapSet)
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
 				for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
 					int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
@@ -133,15 +133,16 @@ public:
 				}
 				// When there is a certain map, the vertex is added to the vertexQueue
 				if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
+					#pragma omp critical
+					{
 					remainingVertexSet.erase(vertexId);
 					vertexQueue.push_back(vertexId);
+					}
 				}
 			}
 		}
 		
-	}
-
-	
+	}	
 
 	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
