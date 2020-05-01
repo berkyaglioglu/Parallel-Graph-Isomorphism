@@ -16,10 +16,12 @@ class Graph
 public:
 	vector<vector<int>> edges;
 	vector<vector<int>> shortestPathAllVertices;
+	int numberOfVertices;
 
 	Graph(int numberOfVertices) 
 	{
 		edges = vector<vector<int>>(numberOfVertices);
+		this->numberOfVertices = numberOfVertices;
 
 		/*
 		set edges here from the input data that comes with parameter
@@ -32,15 +34,19 @@ public:
 	}
 
 	void SetShortestPathAllVertices() 
-	{
+	{	
+		this->shortestPathAllVertices = this->edges;
 		// set shortestPathAllVertices by using edges
-		for(int k=0; k<numberOfVertices; k++){
-			for(int i=0; i<numberOfVertices; i++){
-				for(int j=0; j<numberOfVertices; j++){
-					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
+		int numOfThreads = get_num_threads();
+		int t = numOfThreads/2 - 1 ;
+		#pragma omp parallel for num_threads(t) schedule(static) shared(shortestPathAllVertices) collapse(3)
+			for(int k=0; k<numberOfVertices; k++){
+				for(int i=0; i<numberOfVertices; i++){
+					for(int j=0; j<numberOfVertices; j++){
+						shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
+					}
 				}
-			}
-		}
+			}	
 	}
 private: 
 	int floyd(int edge, int edge1 , int edge2){
@@ -219,9 +225,17 @@ public:
 		}
 
 		//graph1.SetShortestPathAllVertices ve graph2.SetShortestPathAllVertices
-		graph1.SetShortestPathAllVertices();
-		graph2.SetShortestPathAllVertices();
+		#pragma omp parallel num_threads(2)
+		{
+			#pragma omp single
+			{
+				#pragma omp task
+				graph1.SetShortestPathAllVertices();
+				#pragma omp task
+				graph2.SetShortestPathAllVertices();
 
+			}
+		}
 
 		// process possibleMapSet
 		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
