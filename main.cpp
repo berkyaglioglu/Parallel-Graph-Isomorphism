@@ -11,7 +11,6 @@
 using namespace std;
 
 
-
 class Graph
 {
 public:
@@ -69,12 +68,16 @@ private:
 			return edge;
 		}
 		else{
-			return min(edge, edge1 + edge2)
+			return min(edge, edge1 + edge2);
 		}
 
 	}	
 };
 
+void fillEdgesBoth(string filename,Graph & g1, Graph & g2)
+{
+	readEdges(filename, g1.edges, g2.edges);
+}
 
 
 class GraphMapper
@@ -276,6 +279,8 @@ int main()
 
 	Graph g1(numberOfVertices);
 	Graph g2(numberOfVertices);
+	
+	fillEdgesBoth("graphs/50v_9.txt",g1,g2);
 
 	GraphMapper graphMapper(g1, g2);
 
@@ -283,6 +288,7 @@ int main()
 
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
+		cout << "Isomorphism found" << endl;
 	}
 	else {
 		cout << "No isomorphism found" << endl;
