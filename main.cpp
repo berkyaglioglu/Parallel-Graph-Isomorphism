@@ -265,14 +265,20 @@ public:
 int main()
 {
 	//Take input data and set graph1 and graph2 accordingly
-	int numberOfVertices = 10;
+	int numberOfVertices = 50;
 
 	Graph g1(numberOfVertices);
 	Graph g2(numberOfVertices);
+	cout << "Graphs initialized" << endl;
 	
 	fillEdgesBoth("graphs/50v_9.txt",g1,g2);
 
 	GraphMapper graphMapper(g1, g2);
+	
+	cout << "G1 edges:" << endl;
+	printEdges(g1.edges);
+	cout << "G2 edges:" << endl;
+	printEdges(g2.edges);
 
 	graphMapper.Solve();
 

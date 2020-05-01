@@ -30,12 +30,14 @@ void readEdges(string filename,vector<vector<int> >& edges1, vector<vector<int> 
     is >> word; // second word is :, pass these
     while(is >> word)
     {
-          if (word[word.size()-1] != ';')
+        if (word[word.size()-1] == ';')
           {
-            int to_v = atoi(word.c_str());
-			edges1[v].push_back(to_v);
-			edges1[to_v].push_back(v);
+            word.resize(word.size() - 1);
+            
           }
+        int to_v = atoi(word.c_str());
+		edges1[v].push_back(to_v);
+          
     }  
   }
   getline(ifs, line); //get the dummy #
@@ -57,7 +59,6 @@ void readEdges(string filename,vector<vector<int> >& edges1, vector<vector<int> 
           
           int to_v = atoi(word.c_str());
           edges2[v].push_back(to_v);
-		  edges2[to_v].push_back(v);
         
     }  
   }
@@ -93,7 +94,6 @@ void readEdges1(string filename, vector<vector<int> >& edges)
  
           int to_v = atoi(word.c_str());
           edges[v].push_back(to_v);
-		  edges[to_v].push_back(v);
     }  
   }
   return;
@@ -120,10 +120,12 @@ int main()
     vector<vector<int> > edges1(n);
 
     vector<vector<int> > edges2(n);
+	
     for (int i = 0; i < n; i++)
     {
       edges2[i] = vector<int> (n);
     }
+
     readEdges("graphs/50v_9.txt", edges1, edges2);
     printEdges(edges1);
     return 0;
