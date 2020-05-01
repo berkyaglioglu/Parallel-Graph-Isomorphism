@@ -73,12 +73,43 @@ public:
 	}
 
 
-	void BruteForce()
+	void BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
+		/* In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
+		if (isomorphismFound) {
+			return false
+		}
+		*/
+		if (remainingVertexSet.size() == 0) { // if we map all the vertices
+			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
+				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
+			}
+			return true;
+		}
 
+		int vertexIdG1 = *remainingVertexSet.begin()
+
+		for (unordered_set<int>::iterator setIt = possibleMapSet[vertexIdG1].begin(); setIt != possibleMapSet[vertexIdG1].end(); setIt++) {
+			vector< unordered_set<int> > tempPossibleMapSet = possibleMapSet;
+			unordered_set<int> tempRemainingVertexSet = remainingVertexSet;
+
+			tempPossibleMapSet[vertexIdG1].clear();
+			tempPossibleMapSet[vertexIdG1].insert(*setIt);
+			tempRemainingVertexSet.erase(vertexIdG1);
+			ShortestPathFilter(tempPossibleMapSet, tempRemainingVertexSet, vertexIdG1);
+
+			if(!CheckForViolation(tempPossibleMapSet)) {
+				if(BruteForce(tempPossibleMapSet, tempRemainingVertexSet))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
-
+	
 	void Solve()
 	{
 		vector< unordered_set<int> > possibleMapSet(numberOfVertices);
@@ -151,7 +182,7 @@ public:
 			return;
 		}
 
-		//bruteforce , brute forceda tempPossibleMapDet
+		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
 		if (remainingVertexSet.size() != 0) {
 			BruteForce();
 		}
