@@ -34,7 +34,33 @@ public:
 	void SetShortestPathAllVertices() 
 	{
 		// set shortestPathAllVertices by using edges
+		for(int k=0; k<numberOfVertices; k++){
+			for(int i=0; i<numberOfVertices; i++){
+				for(int j=0; j<numberOfVertices; j++){
+					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
+				}
+			}
+		}
 	}
+private: 
+	int floyd(int edge, int edge1 , int edge2){
+		//If there is no any path and other edge
+		if((edge == -1 && edge1 == -1) || (edge == -1 && edge2 == -2) ){
+			return -1;
+		}
+		//There is no any path until now 
+		else if(edge == -1){
+			return edge2 + edge1;
+		}
+		//if one of the edge is not exist return current shortest path
+		else if(edge1 == -1 || edge2 == -1){
+			return edge;
+		}
+		else{
+			return min(edge, edge1 + edge2)
+		}
+
+	}	
 };
 
 
