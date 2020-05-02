@@ -28,7 +28,7 @@ public:
 		
 		shortestPathAllVertices = vector<vector<int>>(numberOfVertices);
 		for (int i=0; i < numberOfVertices; i++) {
-			shortestPathAllVertices[i] = vector<int>(numberOfVertices);
+			shortestPathAllVertices[i] = vector<int>(numberOfVertices,-1);
 		}
 	}
 	
@@ -38,9 +38,20 @@ public:
 		readEdges1(filename, edges);
 	}
 
+	void createShortestPathAllVertices(){
+		for (int i = 0; i < edges.size(); i++)
+		{
+			for (int j = 0; j < edges[i].size(); j++)
+			{
+				shortestPathAllVertices[i][edges[i][j]] = 1;
+			}
+			shortestPathAllVertices[i][i] = 0;
+		}
+	}
+
 	void SetShortestPathAllVertices() 
 	{	
-		this->shortestPathAllVertices = this->edges;
+		createShortestPathAllVertices();
 		// set shortestPathAllVertices by using edges
 		for(int k=0; k<numberOfVertices; k++){
 			for(int i=0; i<numberOfVertices; i++){
@@ -139,10 +150,11 @@ public:
 
 	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
-		//In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
+		// In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
 		if (isomorphismFound) {
 			return false;
 		}
+		
 		if (remainingVertexSet.size() == 0) { // if we map all the vertices
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
 				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
@@ -230,7 +242,6 @@ public:
 		graph1.SetShortestPathAllVertices();
 		graph2.SetShortestPathAllVertices();
 
-
 		// process possibleMapSet
 		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
 			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
@@ -266,7 +277,7 @@ int main()
 	Graph g2(numberOfVertices);
 	cout << "Graphs initialized" << endl;
 	
-	fillEdgesBoth("graphs/50v_9.txt",g1,g2);
+	fillEdgesBoth("graphs/50v_5.txt",g1,g2);
 
 	GraphMapper graphMapper(g1, g2);
 	

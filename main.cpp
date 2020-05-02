@@ -45,6 +45,7 @@ public:
 			{
 				shortestPathAllVertices[i][edges[i][j]] = 1;
 			}
+			shortestPathAllVertices[i][i] = 0;
 		}
 	}
 
@@ -157,11 +158,11 @@ public:
 
 	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
-		/* In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
+		// In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
 		if (isomorphismFound) {
-			return false
+			return false;
 		}
-		*/
+		
 		if (remainingVertexSet.size() == 0) { // if we map all the vertices
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
 				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
