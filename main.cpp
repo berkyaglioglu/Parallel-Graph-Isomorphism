@@ -122,37 +122,24 @@ public:
 	
 	void ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet, int vertexIdG1)
 	{
-		vector<int> vertexQueue;
-		vertexQueue.push_back(vertexIdG1);
-		int vertexIdG2;
-
-		// BFS implemented, this part ends when the vertexQueue is processed completely
-		for (int i = 0; i < vertexQueue.size(); i++) {
-			vertexIdG1 = vertexQueue[i];
-			vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
-			#pragma omp parallel for shared(vertexQueue, possibleMapSet)
-			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
-				for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
-					int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
-					if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist) {
-						unordered_set<int>::iterator tempSetItr = setItr;
-						setItr++;
-						possibleMapSet[vertexId].erase(*tempSetItr);
-					}
-					else {
-						setItr++;
-					}
+		
+		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
+	
+		#pragma omp parallel for shared(possibleMapSet)
+		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
+			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
+				int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
+				if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist) {
+					unordered_set<int>::iterator tempSetItr = setItr;
+					setItr++;
+					possibleMapSet[vertexId].erase(*tempSetItr);
 				}
-				// When there is a certain map, the vertex is added to the vertexQueue
-				if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
-					#pragma omp critical
-					{
-					remainingVertexSet.erase(vertexId);
-					vertexQueue.push_back(vertexId);
-					}
+				else {
+					setItr++;
 				}
 			}
 		}
+		
 		
 	}	
 
