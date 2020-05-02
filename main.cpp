@@ -53,16 +53,14 @@ public:
 	{	
 		createShortestPathAllVertices();
 		// set shortestPathAllVertices by using edges
-		int numOfThreads = omp_get_num_threads();
-		int t = numOfThreads/2 + 1 ;
-		#pragma omp parallel for num_threads(t) schedule(static) shared(shortestPathAllVertices) collapse(3)
-			for(int k=0; k<numberOfVertices; k++){
-				for(int i=0; i<numberOfVertices; i++){
-					for(int j=0; j<numberOfVertices; j++){
-						shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
-					}
+		
+		for(int k=0; k<numberOfVertices; k++){
+			for(int i=0; i<numberOfVertices; i++){
+				for(int j=0; j<numberOfVertices; j++){
+					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
 				}
-			}	
+			}
+		}	
 	}
 private: 
 	int floyd(int edge, int edge1 , int edge2){
@@ -234,7 +232,8 @@ public:
 		}
 
 		//graph1.SetShortestPathAllVertices ve graph2.SetShortestPathAllVertices
-		#pragma omp parallel num_threads(2)
+		omp_set_nested(1);
+		#pragma omp parallel
 		{
 			#pragma omp single
 			{
@@ -251,7 +250,6 @@ public:
 			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
 				remainingVertexSet.erase(vertexId);
 				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
-				break;
 			}
 		}
 
