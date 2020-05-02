@@ -42,7 +42,7 @@ public:
 	{	
 		this->shortestPathAllVertices = this->edges;
 		// set shortestPathAllVertices by using edges
-		int numOfThreads = get_num_threads();
+		int numOfThreads = omp_get_num_threads();
 		int t = numOfThreads/2 - 1 ;
 		#pragma omp parallel for num_threads(t) schedule(static) shared(shortestPathAllVertices) collapse(3)
 			for(int k=0; k<numberOfVertices; k++){
