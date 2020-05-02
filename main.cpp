@@ -55,6 +55,7 @@ public:
 		// set shortestPathAllVertices by using edges
 		
 		for(int k=0; k<numberOfVertices; k++){
+			#pragma omp parallel for collapse(2) schedule(static)
 			for(int i=0; i<numberOfVertices; i++){
 				for(int j=0; j<numberOfVertices; j++){
 					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
