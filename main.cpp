@@ -28,7 +28,7 @@ public:
 		
 		shortestPathAllVertices = vector<vector<int>>(numberOfVertices);
 		for (int i=0; i < numberOfVertices; i++) {
-			shortestPathAllVertices[i] = vector<int>(numberOfVertices);
+			shortestPathAllVertices[i] = vector<int>(numberOfVertices, -1);
 		}
 	}
 	
@@ -38,9 +38,19 @@ public:
 		readEdges1(filename, edges);
 	}
 
+	void createShortestPathAllVertices(){
+		for (int i = 0; i < edges.size(); i++)
+		{
+			for (int j = 0; j < edges[i].size(); j++)
+			{
+				shortestPathAllVertices[i][edges[i][j]] = 1;
+			}
+		}
+	}
+
 	void SetShortestPathAllVertices() 
 	{	
-		this->shortestPathAllVertices = this->edges;
+		createShortestPathAllVertices();
 		// set shortestPathAllVertices by using edges
 		int numOfThreads = omp_get_num_threads();
 		int t = numOfThreads/2 + 1 ;
@@ -105,6 +115,7 @@ public:
 				return true;
 			}
 		}
+		return false;
 	}
 	
 	
@@ -273,16 +284,16 @@ public:
 
 
 
-int main()
+int main(int argc,char* argv[])
 {
 	//Take input data and set graph1 and graph2 accordingly
-	int numberOfVertices = 50;
+	int numberOfVertices = stoi(argv[2]);
 
 	Graph g1(numberOfVertices);
 	Graph g2(numberOfVertices);
 	cout << "Graphs initialized" << endl;
 	
-	fillEdgesBoth("graphs/50v_9.txt",g1,g2);
+	fillEdgesBoth(argv[1],g1,g2);
 
 	GraphMapper graphMapper(g1, g2);
 	
