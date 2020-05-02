@@ -42,8 +42,6 @@ public:
 	{	
 		this->shortestPathAllVertices = this->edges;
 		// set shortestPathAllVertices by using edges
-		int numOfThreads = get_num_threads();
-		int t = numOfThreads/2 - 1 ;
 		for(int k=0; k<numberOfVertices; k++){
 			for(int i=0; i<numberOfVertices; i++){
 				for(int j=0; j<numberOfVertices; j++){
