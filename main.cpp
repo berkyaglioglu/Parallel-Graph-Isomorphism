@@ -262,6 +262,7 @@ public:
 
 		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
 		if (remainingVertexSet.size() != 0) {
+			cout << "h"<< endl;
 			BruteForce(possibleMapSet, remainingVertexSet);
 		}
 
@@ -283,14 +284,23 @@ int main(int argc,char* argv[])
 	
 	fillEdgesBoth(argv[1],g1,g2);
 	cout << "G1 edges:" << endl;
-	printEdges(g1.edges);
+	//printEdges(g1.edges);
 	cout << "G2 edges:" << endl;
-	printEdges(g2.edges);
+	//printEdges(g2.edges);
+
 
 	GraphMapper graphMapper(g1, g2);
 	
 
+
+	double start, end;
+
+	start = omp_get_wtime();
 	graphMapper.Solve();
+	end = omp_get_wtime();
+
+	cout << "Time: " << (end - start) << endl; 
+
 
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
