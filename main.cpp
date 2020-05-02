@@ -144,13 +144,7 @@ public:
 					}
 				}
 				// When there is a certain map, the vertex is added to the vertexQueue
-				if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
-					#pragma omp critical
-					{
-					remainingVertexSet.erase(vertexId);
-					vertexQueue.push_back(vertexId);
-					}
-				}
+
 			}
 		}
 		
