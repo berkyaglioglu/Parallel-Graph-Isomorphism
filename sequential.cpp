@@ -141,7 +141,7 @@ public:
 	{
 		//In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
 		if (isomorphismFound) {
-			return false
+			return false;
 		}
 		if (remainingVertexSet.size() == 0) { // if we map all the vertices
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
