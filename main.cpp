@@ -282,19 +282,23 @@ int main(int argc,char* argv[])
 	cout << "Graphs initialized" << endl;
 	
 	fillEdgesBoth(argv[1],g1,g2);
-
-	GraphMapper graphMapper(g1, g2);
-	
 	cout << "G1 edges:" << endl;
 	printEdges(g1.edges);
 	cout << "G2 edges:" << endl;
 	printEdges(g2.edges);
 
+	GraphMapper graphMapper(g1, g2);
+	
+
 	graphMapper.Solve();
 
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
+		
 		cout << "Isomorphism found" << endl;
+		for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
+			cout << graphMapper.finalVertexMap[i] << " ";
+		cout << endl;
 	}
 	else {
 		cout << "No isomorphism found" << endl;
