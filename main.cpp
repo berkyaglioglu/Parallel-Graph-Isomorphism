@@ -140,43 +140,53 @@ public:
 		}
 		
 		
-	}	
+	}
 
-	bool BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
+	void Process(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
-		// In case of paralelism, this part is the stop condition of child tasks in case of one of the task finds isomorphism
-		if (isomorphismFound) {
-			return false;
+		for (unordered_set<int>::iterator setItr = remainingVertexSet.begin(); setItr != remainingVertexSet.end(); setItr) {
+			if(possibleMapSet[*setItr].size() == 1) {
+				unordered_set<int>::iterator tempSetItr = setItr;
+				setItr++;
+				remainingVertexSet.erase(*tempSetItr);
+				ShortestPathFilter(possibleMapSet, remainingVertexSet, *tempSetItr);
+			}
+			else {
+				setItr++;
+			}
 		}
-		
+
+	}
+
+	void BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
+	{
 		if (remainingVertexSet.size() == 0) { // if we map all the vertices
+			isomorphismFound = true;
 			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
 				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
-				isomorphismFound = true;
 			}
-			return true;
+			return;
 		}
 
 		int vertexIdG1 = *remainingVertexSet.begin();
 
-		for (unordered_set<int>::iterator setItr = possibleMapSet[vertexIdG1].begin(); setItr != possibleMapSet[vertexIdG1].end(); setItr++) {
-			vector< unordered_set<int> > tempPossibleMapSet = possibleMapSet;
-			unordered_set<int> tempRemainingVertexSet = remainingVertexSet;
+		if (remainingVertexSet.size() < numberOfVertices) {
+			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexIdG1].begin(); setItr != possibleMapSet[vertexIdG1].end(); setItr++) {
+				vector< unordered_set<int> > tempPossibleMapSet = possibleMapSet;
+				unordered_set<int> tempRemainingVertexSet = remainingVertexSet;
 
-			tempPossibleMapSet[vertexIdG1].clear();
-			tempPossibleMapSet[vertexIdG1].insert(*setItr);
-			tempRemainingVertexSet.erase(vertexIdG1);
-			ShortestPathFilter(tempPossibleMapSet, tempRemainingVertexSet, vertexIdG1);
+				tempPossibleMapSet[vertexIdG1].clear();
+				tempPossibleMapSet[vertexIdG1].insert(*setItr);
+				tempRemainingVertexSet.erase(vertexIdG1);
+				ShortestPathFilter(tempPossibleMapSet, tempRemainingVertexSet, vertexIdG1);
+				Process(tempPossibleMapSet, tempRemainingVertexSet);
 
-			if(!CheckForViolation(tempPossibleMapSet)) {
-				if(BruteForce(tempPossibleMapSet, tempRemainingVertexSet))
-				{
-					return true;
+				if(!CheckForViolation(tempPossibleMapSet) && !isomorphismFound) {
+					BruteForce(tempPossibleMapSet, tempRemainingVertexSet);
 				}
 			}
 		}
 
-		return false;
 	}
 	
 	
@@ -233,6 +243,8 @@ public:
 		}
 
 		//graph1.SetShortestPathAllVertices ve graph2.SetShortestPathAllVertices
+		double start, end;
+		start = omp_get_wtime();
 		omp_set_nested(1);
 		#pragma omp parallel
 		{
@@ -245,6 +257,8 @@ public:
 
 			}
 		}
+		end = omp_get_wtime();
+		cout << "Time shortest paths: " << (end - start) << endl; 
 
 		// process possibleMapSet
 		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
@@ -253,7 +267,7 @@ public:
 				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
 			}
 		}
-
+		Process(possibleMapSet, remainingVertexSet);
 
 		if (CheckForViolation(possibleMapSet)) {
 			return;
@@ -261,8 +275,23 @@ public:
 
 		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
 		if (remainingVertexSet.size() != 0) {
-			cout << "h"<< endl;
+			omp_set_nested(1);
+
+
+			start = omp_get_wtime();
+
 			BruteForce(possibleMapSet, remainingVertexSet);
+
+			end = omp_get_wtime();
+			cout << "Time brute force: " << (end - start) << endl; 
+			
+			
+		}
+		else {
+			isomorphismFound = true;
+			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
+				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
+			}
 		}
 
 	}
@@ -298,16 +327,16 @@ int main(int argc,char* argv[])
 	graphMapper.Solve();
 	end = omp_get_wtime();
 
-	cout << "Time: " << (end - start) << endl; 
+	cout << "Time total: " << (end - start) << endl; 
 
 
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
 		
 		cout << "Isomorphism found" << endl;
-		for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
+		/*for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
 			cout << graphMapper.finalVertexMap[i] << " ";
-		cout << endl;
+		cout << endl;*/
 	}
 	else {
 		cout << "No isomorphism found" << endl;
