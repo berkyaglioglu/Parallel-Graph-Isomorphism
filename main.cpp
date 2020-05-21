@@ -38,6 +38,24 @@ public:
 		readEdges1(filename, edges);
 	}
 
+	void RunBFS(int vertex)
+	{
+		vector<int> queue;
+		int curr_vertex;
+		queue.push_back(vertex);
+		shortestPathAllVertices[vertex][vertex] = 0;
+		
+		for (int i=0; i < queue.size(); i++) {
+			curr_vertex = queue[i];
+			for (int j=0; j < edges[curr_vertex].size(); j++) {
+				if (shortestPathAllVertices[vertex][edges[curr_vertex][j]] == -1) {
+					queue.push_back(edges[curr_vertex][j]);
+					shortestPathAllVertices[vertex][edges[curr_vertex][j]] = shortestPathAllVertices[vertex][curr_vertex] + 1;
+				}
+			}
+		}
+	}
+/*
 	void createShortestPathAllVertices(){
 		for (int i = 0; i < edges.size(); i++)
 		{
@@ -82,6 +100,7 @@ private:
 		}
 
 	}	
+*/
 };
 
 void fillEdgesBoth(string filename,Graph & g1, Graph & g2)
@@ -107,24 +126,34 @@ public:
 		finalVertexMap = vector<int>(numberOfVertices);
 	}
 
-
-	bool CheckForViolation(vector< unordered_set<int> > & possibleMapSet)
+	int ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, int vertexIdG1)
 	{
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-			if (possibleMapSet[vertexId].size() == 0) {
-				return true;
+		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
+
+		omp_set_nested(1);
+		if (graph1.shortestPathAllVertices[vertexIdG1][vertexIdG1] != 0 && graph2.shortestPathAllVertices[vertexIdG2][vertexIdG2] != 0) {
+			#pragma omp parallel
+			{
+				#pragma omp single
+				{
+					#pragma omp task
+					graph1.RunBFS(vertexIdG1);
+					#pragma omp task
+					graph2.RunBFS(vertexIdG2);
+				}
 			}
 		}
-		return false;
-	}
-	
-	
-	void ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet, int vertexIdG1)
-	{
+		else if (graph1.shortestPathAllVertices[vertexIdG1][vertexIdG1] != 0) {
+			graph1.RunBFS(vertexIdG1);
+		}
+		else if (graph2.shortestPathAllVertices[vertexIdG2][vertexIdG2] != 0) {
+			graph2.RunBFS(vertexIdG2);
+		}
 		
-		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
-	
-		#pragma omp parallel for shared(possibleMapSet)
+
+		int progress = 0;
+
+		#pragma omp parallel for shared(possibleMapSet) reduction(+:progress)
 		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
 			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
 				int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
@@ -137,38 +166,41 @@ public:
 					setItr++;
 				}
 			}
+			if (possibleMapSet[vertexId].size() == 1) { // count how many certain map there are
+				progress++;
+			}
+			else if (possibleMapSet[vertexId].size() == 0) { // violating condition for isomorphism, make "progress" negative to notify
+				progress += (-numberOfVertices);
+			}
 		}
 		
-		
+		return progress;
 	}
 
-	void Process(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
+	int Process(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
+		int progress = 0;
 		for (unordered_set<int>::iterator setItr = remainingVertexSet.begin(); setItr != remainingVertexSet.end(); setItr) {
 			if(possibleMapSet[*setItr].size() == 1) {
 				unordered_set<int>::iterator tempSetItr = setItr;
 				setItr++;
 				remainingVertexSet.erase(*tempSetItr);
-				ShortestPathFilter(possibleMapSet, remainingVertexSet, *tempSetItr);
+				progress = ShortestPathFilter(possibleMapSet, *tempSetItr);
+				if (progress == numberOfVertices || progress < 0) {
+					break;
+				}
 			}
 			else {
 				setItr++;
 			}
 		}
-
+		return progress;
 	}
 
 	void BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
 	{
-		if (remainingVertexSet.size() == 0) { // if we map all the vertices
-			isomorphismFound = true;
-			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
-			}
-			return;
-		}
-
 		int vertexIdG1 = *remainingVertexSet.begin();
+		int progress = 0;
 
 		if (remainingVertexSet.size() < numberOfVertices) {
 			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexIdG1].begin(); setItr != possibleMapSet[vertexIdG1].end(); setItr++) {
@@ -178,15 +210,37 @@ public:
 				tempPossibleMapSet[vertexIdG1].clear();
 				tempPossibleMapSet[vertexIdG1].insert(*setItr);
 				tempRemainingVertexSet.erase(vertexIdG1);
-				ShortestPathFilter(tempPossibleMapSet, tempRemainingVertexSet, vertexIdG1);
-				Process(tempPossibleMapSet, tempRemainingVertexSet);
 
-				if(!CheckForViolation(tempPossibleMapSet) && !isomorphismFound) {
-					BruteForce(tempPossibleMapSet, tempRemainingVertexSet);
+				progress = ShortestPathFilter(tempPossibleMapSet, vertexIdG1);
+				if (progress == numberOfVertices) {
+					isomorphismFound = true;
+					for (int vertexId = 0; vertexId < tempPossibleMapSet.size(); vertexId++) {
+						finalVertexMap[vertexId] = *tempPossibleMapSet[vertexId].begin();
+					}
+					return;
+				}
+				else if (progress < 0) { // violating condition, continue for the next try
+					continue;
+				}
+				
+				progress = Process(tempPossibleMapSet, tempRemainingVertexSet);
+				if (progress == numberOfVertices) {
+					isomorphismFound = true;
+					for (int vertexId = 0; vertexId < tempPossibleMapSet.size(); vertexId++) {
+						finalVertexMap[vertexId] = *tempPossibleMapSet[vertexId].begin();
+					}
+					return;
+				}
+				else if (progress < 0) { // violating condition, continue for the next try
+					continue;
+				}
+				
+				BruteForce(tempPossibleMapSet, tempRemainingVertexSet);
+				if (isomorphismFound) {
+					return;
 				}
 			}
 		}
-
 	}
 	
 	
@@ -223,7 +277,6 @@ public:
 		}
 		
 
-		//remainingVertexSet set et
 		//possibleMapSet set et
 		unordered_set<int> verticesG1;
 		unordered_set<int> verticesG2;
@@ -233,7 +286,6 @@ public:
 			if (verticesG1.size() == verticesG2.size()) {
 				for (unordered_set<int>::iterator setItr = verticesG1.begin(); setItr != verticesG1.end(); setItr++) {
 					possibleMapSet[*setItr] = verticesG2;
-					remainingVertexSet.insert(*setItr);
 				}
 			}
 			else {
@@ -242,56 +294,49 @@ public:
 			}
 		}
 
-		//graph1.SetShortestPathAllVertices ve graph2.SetShortestPathAllVertices
-		double start, end;
-		start = omp_get_wtime();
-		omp_set_nested(1);
-		#pragma omp parallel
-		{
-			#pragma omp single
-			{
-				#pragma omp task
-				graph1.SetShortestPathAllVertices();
-				#pragma omp task
-				graph2.SetShortestPathAllVertices();
-
-			}
-		}
-		end = omp_get_wtime();
-		cout << "Time shortest paths: " << (end - start) << endl; 
-
 		// process possibleMapSet
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-			if (possibleMapSet[vertexId].size() == 1 && remainingVertexSet.find(vertexId) != remainingVertexSet.end()) {
-				remainingVertexSet.erase(vertexId);
-				ShortestPathFilter(possibleMapSet, remainingVertexSet, vertexId);
+		//remainingVertexSet set et
+		int progress = 0;
+		for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
+			if (possibleMapSet[vertexId].size() == 1) {
+				progress = ShortestPathFilter(possibleMapSet, vertexId);
+				if (progress == numberOfVertices) {
+					isomorphismFound = true;
+					break;
+				}
+				else if (progress < 0) {
+					return;
+				}
+			}
+			else {
+				remainingVertexSet.insert(vertexId);
 			}
 		}
-		Process(possibleMapSet, remainingVertexSet);
-
-		if (CheckForViolation(possibleMapSet)) {
-			return;
+		
+		if (!isomorphismFound) {
+			progress = Process(possibleMapSet, remainingVertexSet);
+			if (progress == numberOfVertices) {
+				isomorphismFound = true;
+			}
+			else if (progress < 0) {
+				return;
+			}
 		}
-
-		//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
-		if (remainingVertexSet.size() != 0) {
-			omp_set_nested(1);
-
-
+		
+		// if found, set final vertex map
+		if (isomorphismFound) {
+			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
+				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
+			}
+		}
+		else {//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
+			double start, end;
 			start = omp_get_wtime();
 
 			BruteForce(possibleMapSet, remainingVertexSet);
 
 			end = omp_get_wtime();
-			cout << "Time brute force: " << (end - start) << endl; 
-			
-			
-		}
-		else {
-			isomorphismFound = true;
-			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
-			}
+			cout << "Time brute force: " << (end - start) << endl;
 		}
 
 	}
@@ -332,9 +377,9 @@ int main(int argc,char* argv[])
 
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
-		
 		cout << "Isomorphism found" << endl;
-		/*for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
+		/*
+		for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
 			cout << graphMapper.finalVertexMap[i] << " ";
 		cout << endl;*/
 	}
