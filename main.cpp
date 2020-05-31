@@ -55,52 +55,7 @@ public:
 			}
 		}
 	}
-/*
-	void createShortestPathAllVertices(){
-		for (int i = 0; i < edges.size(); i++)
-		{
-			for (int j = 0; j < edges[i].size(); j++)
-			{
-				shortestPathAllVertices[i][edges[i][j]] = 1;
-			}
-			shortestPathAllVertices[i][i] = 0;
-		}
-	}
 
-	void SetShortestPathAllVertices() 
-	{	
-		createShortestPathAllVertices();
-		// set shortestPathAllVertices by using edges
-		
-		for(int k=0; k<numberOfVertices; k++){
-			#pragma omp parallel for collapse(2) schedule(static)
-			for(int i=0; i<numberOfVertices; i++){
-				for(int j=0; j<numberOfVertices; j++){
-					shortestPathAllVertices[i][j] = floyd(shortestPathAllVertices[i][j], shortestPathAllVertices[i][k],shortestPathAllVertices[k][j]);
-				}
-			}
-		}	
-	}
-private: 
-	int floyd(int edge, int edge1 , int edge2){
-		//If there is no any path and other edge
-		if((edge == -1 && edge1 == -1) || (edge == -1 && edge2 == -1) ){
-			return -1;
-		}
-		//There is no any path until now 
-		else if(edge == -1){
-			return edge2 + edge1;
-		}
-		//if one of the edge is not exist return current shortest path
-		else if(edge1 == -1 || edge2 == -1){
-			return edge;
-		}
-		else{
-			return min(edge, edge1 + edge2);
-		}
-
-	}	
-*/
 };
 
 void fillEdgesBoth(string filename,Graph & g1, Graph & g2)
@@ -126,11 +81,10 @@ public:
 		finalVertexMap = vector<int>(numberOfVertices);
 	}
 
-	int ShortestPathFilter(vector< unordered_set<int> > & possibleMapSet, int vertexIdG1)
+	void ShortestPathFilter(int * possibleMapSet, int * currFinalVertexMap, int vertexIdG1)
 	{
-		int vertexIdG2 = *possibleMapSet[vertexIdG1].begin();
+		int vertexIdG2 = currFinalVertexMap[vertexIdG1];
 
-		omp_set_nested(1);
 		if (graph1.shortestPathAllVertices[vertexIdG1][vertexIdG1] != 0 && graph2.shortestPathAllVertices[vertexIdG2][vertexIdG2] != 0) {
 			#pragma omp parallel
 			{
@@ -151,94 +105,148 @@ public:
 		}
 		
 
-		int progress = 0;
-
-		#pragma omp parallel for shared(possibleMapSet) reduction(+:progress)
-		for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++){
-			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexId].begin(); setItr != possibleMapSet[vertexId].end();) {
-				int dist = graph1.shortestPathAllVertices[vertexIdG1][vertexId];
-				if(graph2.shortestPathAllVertices[vertexIdG2][*setItr] != dist) {
-					unordered_set<int>::iterator tempSetItr = setItr;
-					setItr++;
-					possibleMapSet[vertexId].erase(*tempSetItr);
+		#pragma omp parallel for collapse(2) shared(possibleMapSet)
+		for (int v1 = 0; v1 < numberOfVertices; v1++){
+			for (int v2 = 0; v2 < numberOfVertices; v2++) {
+				int dist = graph1.shortestPathAllVertices[vertexIdG1][v1];
+				if (possibleMapSet[v1*numberOfVertices + v2] == 1) {
+					if(graph2.shortestPathAllVertices[vertexIdG2][v2] != dist) {
+						possibleMapSet[v1*numberOfVertices + v2] = 0;
+					}
 				}
-				else {
-					setItr++;
-				}
-			}
-			if (possibleMapSet[vertexId].size() == 1) { // count how many certain map there are
-				progress++;
-			}
-			else if (possibleMapSet[vertexId].size() == 0) { // violating condition for isomorphism, make "progress" negative to notify
-				progress += (-numberOfVertices);
 			}
 		}
-		
-		return progress;
 	}
 
-	int Process(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
-	{
+
+	int CheckProgress(int * possibleMapSet, int * currFinalVertexMap) {
 		int progress = 0;
-		for (unordered_set<int>::iterator setItr = remainingVertexSet.begin(); setItr != remainingVertexSet.end(); setItr) {
-			if(possibleMapSet[*setItr].size() == 1) {
-				unordered_set<int>::iterator tempSetItr = setItr;
-				setItr++;
-				remainingVertexSet.erase(*tempSetItr);
-				progress = ShortestPathFilter(possibleMapSet, *tempSetItr);
-				if (progress == numberOfVertices || progress < 0) {
-					break;
+		#pragma omp parallel for reduction(+:progress)
+		for(int i = 0; i < numberOfVertices; i++) {
+			if (currFinalVertexMap[i] == -1) {
+				int numberOfPossibility = 0;
+				for (int j = 0; j < numberOfVertices; j++) {
+					if (possibleMapSet[i*numberOfVertices + j] == 1) {
+						numberOfPossibility++;
+						if (numberOfPossibility > 1) {
+							break;
+						}
+					}
+				}
+				if (numberOfPossibility == 0) {
+					progress -= numberOfVertices;
+				}
+				else if (numberOfPossibility == 1) {
+					progress++;
 				}
 			}
 			else {
-				setItr++;
+				progress++;
 			}
 		}
 		return progress;
 	}
 
-	void BruteForce(vector< unordered_set<int> > & possibleMapSet, unordered_set<int> & remainingVertexSet)
+
+	int Process(int * possibleMapSet, int * currFinalVertexMap)
 	{
-		int vertexIdG1 = *remainingVertexSet.begin();
+		int progress = 0;
+		int numberOfPossibility;
+		int onlyMap;
+		for (int i = 0; i < numberOfVertices; i++) {
+			if (currFinalVertexMap[i] == -1) {
+				numberOfPossibility = 0;
+				#pragma omp parallel for reduction(+:numberOfPossibility)
+				for (int j = 0; j < numberOfVertices; j++) {
+					if (possibleMapSet[i*numberOfVertices + j] == 1) {
+						onlyMap = j;
+						numberOfPossibility++;
+					}
+				}
+				if(numberOfPossibility == 1) {
+					currFinalVertexMap[i] = onlyMap;
+					ShortestPathFilter(possibleMapSet, currFinalVertexMap, i);
+					progress = CheckProgress(possibleMapSet, currFinalVertexMap);
+					if (progress < 0 || progress == numberOfVertices) {
+						break;
+					}
+				}
+				else if (numberOfPossibility == 0) {
+					progress = -1;
+					break;
+				}
+			}
+		}
+		return progress;
+	}
+
+	void BruteForce(int * possibleMapSet, int * currFinalVertexMap)
+	{
+		int vertexIdG1;
+		for (int i = 0; i < numberOfVertices; i++) {
+			if (currFinalVertexMap[i] == -1) {
+				vertexIdG1 = i;
+				break;
+			}
+		}
+		
 		int progress = 0;
 
-		if (remainingVertexSet.size() < numberOfVertices) {
-			for (unordered_set<int>::iterator setItr = possibleMapSet[vertexIdG1].begin(); setItr != possibleMapSet[vertexIdG1].end(); setItr++) {
-				vector< unordered_set<int> > tempPossibleMapSet = possibleMapSet;
-				unordered_set<int> tempRemainingVertexSet = remainingVertexSet;
+		for (int vertexIdG2 = 0; vertexIdG2 < numberOfVertices; vertexIdG2++) {
+			if (possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] == 1) {
+				int * tempPossibleMapSet = new int[numberOfVertices*numberOfVertices];
+				int * tempCurrFinalVertexMap = new int[numberOfVertices];
+				for (int i = 0; i < numberOfVertices; i++) {
+					tempCurrFinalVertexMap[i] = currFinalVertexMap[i];
+					for(int j = 0; j < numberOfVertices; j++) {
+						if (i == vertexIdG1) {
+							tempPossibleMapSet[i*numberOfVertices + j] = 0;
+						}
+						else {
+							tempPossibleMapSet[i*numberOfVertices + j] = possibleMapSet[i*numberOfVertices + j];
+						}
+					}
+				}
 
-				tempPossibleMapSet[vertexIdG1].clear();
-				tempPossibleMapSet[vertexIdG1].insert(*setItr);
-				tempRemainingVertexSet.erase(vertexIdG1);
+				tempPossibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = 1;
+				tempCurrFinalVertexMap[vertexIdG1] = vertexIdG2;
 
-				progress = ShortestPathFilter(tempPossibleMapSet, vertexIdG1);
+				ShortestPathFilter(tempPossibleMapSet, tempCurrFinalVertexMap, vertexIdG1);
+				progress = Process(tempPossibleMapSet, tempCurrFinalVertexMap);
+				
 				if (progress == numberOfVertices) {
 					isomorphismFound = true;
-					for (int vertexId = 0; vertexId < tempPossibleMapSet.size(); vertexId++) {
-						finalVertexMap[vertexId] = *tempPossibleMapSet[vertexId].begin();
+					for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
+						if (tempCurrFinalVertexMap[vertexId] == -1) {
+							int onlyMap;
+							for (int i = 0; i < numberOfVertices; i++) {
+								if (tempPossibleMapSet[vertexId*numberOfVertices + i] == 1) {
+									onlyMap = i;
+									break;
+								}
+							}
+							finalVertexMap[vertexId] = onlyMap;
+						}
+						finalVertexMap[vertexId] = tempCurrFinalVertexMap[vertexId];
 					}
+					delete[] tempPossibleMapSet;
+					delete[] tempCurrFinalVertexMap;
 					return;
 				}
 				else if (progress < 0) { // violating condition, continue for the next try
+					delete[] tempPossibleMapSet;
+					delete[] tempCurrFinalVertexMap;
 					continue;
 				}
-				
-				progress = Process(tempPossibleMapSet, tempRemainingVertexSet);
-				if (progress == numberOfVertices) {
-					isomorphismFound = true;
-					for (int vertexId = 0; vertexId < tempPossibleMapSet.size(); vertexId++) {
-						finalVertexMap[vertexId] = *tempPossibleMapSet[vertexId].begin();
-					}
-					return;
-				}
-				else if (progress < 0) { // violating condition, continue for the next try
-					continue;
-				}
-				
-				BruteForce(tempPossibleMapSet, tempRemainingVertexSet);
+
+				BruteForce(tempPossibleMapSet, tempCurrFinalVertexMap);
 				if (isomorphismFound) {
+					delete[] tempPossibleMapSet;
+					delete[] tempCurrFinalVertexMap;
 					return;
 				}
+				delete[] tempPossibleMapSet;
+				delete[] tempCurrFinalVertexMap;
 			}
 		}
 	}
@@ -246,99 +254,104 @@ public:
 	
 	void Solve()
 	{
-		vector< unordered_set<int> > possibleMapSet(numberOfVertices);
-		unordered_set<int> remainingVertexSet;
-
 		if (graph1.edges.size() != graph2.edges.size()) {
 			cout << "Graphs do not have the same number of vertices." << endl;
 			return;
 		}
 
 		// check iso olabilir mi, aynı degreeler 2 graph'ta aynı sayıda node'a sahip olmalı.
-		unordered_map< int, pair< unordered_set<int>, unordered_set<int> > > degreeVerticesTable;
-		unordered_map< int, pair< unordered_set<int>, unordered_set<int> > >::iterator mapItr;
-		pair<unordered_set<int>,unordered_set<int>> pairOfSets;
+		unordered_map< int, pair< vector<int>, vector<int> > > degreeVerticesTable;
+		unordered_map< int, pair< vector<int>, vector<int> > >::iterator mapItr;
+		pair<vector<int>,vector<int>> pairOfVecs;
 		int degree;
 
 		for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
 			degree = graph1.edges[vertexId].size();
 			if (degreeVerticesTable.find(degree) == degreeVerticesTable.end()) { // if degree has not been inserted into hash table before
-				degreeVerticesTable.insert({degree, pairOfSets});
+				degreeVerticesTable.insert({degree, pairOfVecs});
 			}
 			mapItr = degreeVerticesTable.find(degree);
-			(mapItr->second).first.insert(vertexId); // insert node id for the first graph
+			(mapItr->second).first.push_back(vertexId); // insert node id for the first graph
 
 			degree = graph2.edges[vertexId].size();
 			if (degreeVerticesTable.find(degree) == degreeVerticesTable.end()) { // if degree has not been inserted into hash table before
-				degreeVerticesTable.insert({degree, pairOfSets});
+				degreeVerticesTable.insert({degree, pairOfVecs});
 			}
 			mapItr = degreeVerticesTable.find(degree);
-			(mapItr->second).second.insert(vertexId); // insert node id for the second graph
+			(mapItr->second).second.push_back(vertexId); // insert node id for the second graph
 		}
 		
 
+		int * possibleMapSet = new int[numberOfVertices*numberOfVertices];
+		for (int i = 0; i < numberOfVertices*numberOfVertices; i++) {
+			possibleMapSet[i] = 0;
+		}
 		//possibleMapSet set et
-		unordered_set<int> verticesG1;
-		unordered_set<int> verticesG2;
+		vector<int> verticesG1;
+		vector<int> verticesG2;
 		for (mapItr = degreeVerticesTable.begin(); mapItr != degreeVerticesTable.end(); mapItr++) {
 			verticesG1 = (mapItr->second).first;
 			verticesG2 = (mapItr->second).second;
 			if (verticesG1.size() == verticesG2.size()) {
-				for (unordered_set<int>::iterator setItr = verticesG1.begin(); setItr != verticesG1.end(); setItr++) {
-					possibleMapSet[*setItr] = verticesG2;
+				for (int i = 0; i < verticesG1.size(); i++) {
+					for (int j = 0; j < verticesG2.size(); j++) {
+						possibleMapSet[verticesG1[i]*numberOfVertices + verticesG2[j]] = 1;
+					}
 				}
 			}
 			else {
+				delete[] possibleMapSet;
 				cout << "There are different number of vertices with the same degree." << endl;
 				return;
 			}
 		}
 
-		// process possibleMapSet
-		//remainingVertexSet set et
-		int progress = 0;
-		for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
-			if (possibleMapSet[vertexId].size() == 1) {
-				progress = ShortestPathFilter(possibleMapSet, vertexId);
-				if (progress == numberOfVertices) {
-					isomorphismFound = true;
-					break;
+		int * currFinalVertexMap = new int[numberOfVertices];
+		for (int i = 0; i < numberOfVertices; i++) {
+			currFinalVertexMap[i] = -1;
+		}
+
+
+///------------------------
+		int progress;
+
+		progress = Process(possibleMapSet, currFinalVertexMap);
+		if (progress == numberOfVertices) {
+			isomorphismFound = true;
+			for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
+				if (currFinalVertexMap[vertexId] == -1) {
+					int onlyMap;
+					for (int i = 0; i < numberOfVertices; i++) {
+						if (possibleMapSet[vertexId*numberOfVertices + i] == 1) {
+							onlyMap = i;
+							break;
+						}
+					}
+					finalVertexMap[vertexId] = onlyMap;
 				}
-				else if (progress < 0) {
-					return;
-				}
+				finalVertexMap[vertexId] = currFinalVertexMap[vertexId];
 			}
-			else {
-				remainingVertexSet.insert(vertexId);
-			}
+			delete[] possibleMapSet;
+			delete[] currFinalVertexMap;
+			return;
 		}
+		else if (progress < 0) { // violating condition
+			delete[] possibleMapSet;
+			delete[] currFinalVertexMap;
+			return;
+		}
+
+
+		double start, end;
+		start = omp_get_wtime();
+
+		BruteForce(possibleMapSet, currFinalVertexMap);
+
+		end = omp_get_wtime();
+		cout << "Time brute force: " << (end - start) << endl;
 		
-		if (!isomorphismFound) {
-			progress = Process(possibleMapSet, remainingVertexSet);
-			if (progress == numberOfVertices) {
-				isomorphismFound = true;
-			}
-			else if (progress < 0) {
-				return;
-			}
-		}
-		
-		// if found, set final vertex map
-		if (isomorphismFound) {
-			for (int vertexId = 0; vertexId < possibleMapSet.size(); vertexId++) {
-				finalVertexMap[vertexId] = *possibleMapSet[vertexId].begin();
-			}
-		}
-		else {//bruteforce , brute forceda tempPossibleMapSet ve tempRemainingVertexSet
-			double start, end;
-			start = omp_get_wtime();
-
-			BruteForce(possibleMapSet, remainingVertexSet);
-
-			end = omp_get_wtime();
-			cout << "Time brute force: " << (end - start) << endl;
-		}
-
+		delete[] possibleMapSet;
+		delete[] currFinalVertexMap;
 	}
 
 };
