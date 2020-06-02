@@ -51,3 +51,6 @@ Speed of the algorithm is improved even more since the progress report. First gr
 
 Also we've compared our algorithm with the nauty algorithm (state-of-art) in bigger graphs. Since density of the graphs affect the speed of the algorithms we had created graphs with same size but different densities. Algorithms are tested on graphs of 10k 20k 30k nodes. Number of neighbours of a node (i.e. density) varies from 10 to 5k. When it comes to sparse graphs our algorithm runs faster than the nauty algorithm. Since nauty algorithm is more suitable for dense graphs, in dense graphs, timing result of our algorithm is not better than the nauty. 
 ![times](images/times.jpeg)
+
+Execution time of the algorithm itself is given in detail in the graph below. Average edge number of vertices is 150 in all of these graphs and size of the graphs vary from 2k to 30k
+![](images/speedup_final_big.jpg)
