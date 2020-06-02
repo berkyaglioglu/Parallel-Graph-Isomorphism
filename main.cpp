@@ -81,7 +81,7 @@ public:
 		finalVertexMap = vector<int>(numberOfVertices);
 	}
 
-	void ShortestPathFilter(int * possibleMapSet, int * currFinalVertexMap, int vertexIdG1)
+	void ShortestPathFilter(char * possibleMapSet, int * currFinalVertexMap, int vertexIdG1)
 	{
 		int vertexIdG2 = currFinalVertexMap[vertexIdG1];
 
@@ -109,9 +109,9 @@ public:
 		for (int v1 = 0; v1 < numberOfVertices; v1++){
 			for (int v2 = 0; v2 < numberOfVertices; v2++) {
 				int dist = graph1.shortestPathAllVertices[vertexIdG1][v1];
-				if (possibleMapSet[v1*numberOfVertices + v2] == 1) {
+				if (possibleMapSet[v1*numberOfVertices + v2] == '1') {
 					if(graph2.shortestPathAllVertices[vertexIdG2][v2] != dist) {
-						possibleMapSet[v1*numberOfVertices + v2] = 0;
+						possibleMapSet[v1*numberOfVertices + v2] = '0';
 					}
 				}
 			}
@@ -119,14 +119,14 @@ public:
 	}
 
 
-	int CheckProgress(int * possibleMapSet, int * currFinalVertexMap) {
+	int CheckProgress(char * possibleMapSet, int * currFinalVertexMap) {
 		int progress = 0;
 		#pragma omp parallel for reduction(+:progress)
 		for(int i = 0; i < numberOfVertices; i++) {
 			if (currFinalVertexMap[i] == -1) {
 				int numberOfPossibility = 0;
 				for (int j = 0; j < numberOfVertices; j++) {
-					if (possibleMapSet[i*numberOfVertices + j] == 1) {
+					if (possibleMapSet[i*numberOfVertices + j] == '1') {
 						numberOfPossibility++;
 						if (numberOfPossibility > 1) {
 							break;
@@ -148,7 +148,7 @@ public:
 	}
 
 
-	int Process(int * possibleMapSet, int * currFinalVertexMap)
+	int Process(char * possibleMapSet, int * currFinalVertexMap)
 	{
 		int progress = 0;
 		int numberOfPossibility;
@@ -158,7 +158,7 @@ public:
 				numberOfPossibility = 0;
 				#pragma omp parallel for reduction(+:numberOfPossibility)
 				for (int j = 0; j < numberOfVertices; j++) {
-					if (possibleMapSet[i*numberOfVertices + j] == 1) {
+					if (possibleMapSet[i*numberOfVertices + j] == '1') {
 						onlyMap = j;
 						numberOfPossibility++;
 					}
@@ -180,7 +180,7 @@ public:
 		return progress;
 	}
 
-	void BruteForce(int * possibleMapSet, int * currFinalVertexMap)
+	void BruteForce(char * possibleMapSet, int * currFinalVertexMap)
 	{
 		int vertexIdG1;
 		for (int i = 0; i < numberOfVertices; i++) {
@@ -193,14 +193,14 @@ public:
 		int progress = 0;
 
 		for (int vertexIdG2 = 0; vertexIdG2 < numberOfVertices; vertexIdG2++) {
-			if (possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] == 1) {
-				int * tempPossibleMapSet = new int[numberOfVertices*numberOfVertices];
+			if (possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] == '1') {
+				char * tempPossibleMapSet = new char[numberOfVertices*numberOfVertices];
 				int * tempCurrFinalVertexMap = new int[numberOfVertices];
 				for (int i = 0; i < numberOfVertices; i++) {
 					tempCurrFinalVertexMap[i] = currFinalVertexMap[i];
 					for(int j = 0; j < numberOfVertices; j++) {
 						if (i == vertexIdG1) {
-							tempPossibleMapSet[i*numberOfVertices + j] = 0;
+							tempPossibleMapSet[i*numberOfVertices + j] = '0';
 						}
 						else {
 							tempPossibleMapSet[i*numberOfVertices + j] = possibleMapSet[i*numberOfVertices + j];
@@ -208,7 +208,7 @@ public:
 					}
 				}
 
-				tempPossibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = 1;
+				tempPossibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = '1';
 				tempCurrFinalVertexMap[vertexIdG1] = vertexIdG2;
 
 				ShortestPathFilter(tempPossibleMapSet, tempCurrFinalVertexMap, vertexIdG1);
@@ -220,7 +220,7 @@ public:
 						if (tempCurrFinalVertexMap[vertexId] == -1) {
 							int onlyMap;
 							for (int i = 0; i < numberOfVertices; i++) {
-								if (tempPossibleMapSet[vertexId*numberOfVertices + i] == 1) {
+								if (tempPossibleMapSet[vertexId*numberOfVertices + i] == '1') {
 									onlyMap = i;
 									break;
 								}
@@ -282,9 +282,9 @@ public:
 		}
 		
 
-		int * possibleMapSet = new int[numberOfVertices*numberOfVertices];
+		char * possibleMapSet = new char[numberOfVertices*numberOfVertices];
 		for (int i = 0; i < numberOfVertices*numberOfVertices; i++) {
-			possibleMapSet[i] = 0;
+			possibleMapSet[i] = '0';
 		}
 		//possibleMapSet set et
 		vector<int> verticesG1;
@@ -295,7 +295,7 @@ public:
 			if (verticesG1.size() == verticesG2.size()) {
 				for (int i = 0; i < verticesG1.size(); i++) {
 					for (int j = 0; j < verticesG2.size(); j++) {
-						possibleMapSet[verticesG1[i]*numberOfVertices + verticesG2[j]] = 1;
+						possibleMapSet[verticesG1[i]*numberOfVertices + verticesG2[j]] = '1';
 					}
 				}
 			}
@@ -322,7 +322,7 @@ public:
 				if (currFinalVertexMap[vertexId] == -1) {
 					int onlyMap;
 					for (int i = 0; i < numberOfVertices; i++) {
-						if (possibleMapSet[vertexId*numberOfVertices + i] == 1) {
+						if (possibleMapSet[vertexId*numberOfVertices + i] == '1') {
 							onlyMap = i;
 							break;
 						}
