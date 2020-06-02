@@ -59,3 +59,5 @@ Also we've compared our algorithm with the nauty algorithm (state-of-art) in big
 ## Conclusion
 
 ## Future Work
+
+Although we had important achievements in parallelization and speedup, memory usage of the algorithm is still polynomial. This high memory usage limits algorithm therefore the algorithm only supports graphs with smaller size than 50k. As a future work the algorithm can be improved in terms of memory usage. Another issue is gpu parallelization. We attempted to gpu parallelize the algorithm (those files are also in github. All files with cu and cuh extensions) however the current version of the code is not suitable for gpu and some changes are needed. After some modifications maybe gpu and cpu parallelization can be applied at the same time.
