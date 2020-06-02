@@ -585,39 +585,57 @@ public:
 
 		for (int vertexIdG2 = 0; vertexIdG2 < numberOfVertices; vertexIdG2++) {
 			if (possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] == '1') {
+				char * tempPossibleMapSet = new char[numberOfVertices*numberOfVertices];
+				int * tempCurrFinalVertexMap = new int[numberOfVertices];
+				for (int i = 0; i < numberOfVertices; i++) {
+					tempCurrFinalVertexMap[i] = currFinalVertexMap[i];
+					for(int j = 0; j < numberOfVertices; j++) {
+						if (i == vertexIdG1) {
+							tempPossibleMapSet[i*numberOfVertices + j] = '0';
+						}
+						else {
+							tempPossibleMapSet[i*numberOfVertices + j] = possibleMapSet[i*numberOfVertices + j];
+						}
+					}
+				}
 
-				possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = '1';
-				currFinalVertexMap[vertexIdG1] = vertexIdG2;
+				tempPossibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = '1';
+				tempCurrFinalVertexMap[vertexIdG1] = vertexIdG2;
 
-				ShortestPathFilter(possibleMapSet, currFinalVertexMap, vertexIdG1);
-				progress = Process(possibleMapSet, currFinalVertexMap);
+				ShortestPathFilter(tempPossibleMapSet, tempCurrFinalVertexMap, vertexIdG1);
+				progress = Process(tempPossibleMapSet, tempCurrFinalVertexMap);
 				
 				if (progress == numberOfVertices) {
 					isomorphismFound = true;
 					for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
-						if (currFinalVertexMap[vertexId] == -1) {
+						if (tempCurrFinalVertexMap[vertexId] == -1) {
 							int onlyMap;
 							for (int i = 0; i < numberOfVertices; i++) {
-								if (possibleMapSet[vertexId*numberOfVertices + i] == '1') {
+								if (tempPossibleMapSet[vertexId*numberOfVertices + i] == '1') {
 									onlyMap = i;
 									break;
 								}
 							}
 							finalVertexMap[vertexId] = onlyMap;
 						}
-						finalVertexMap[vertexId] = currFinalVertexMap[vertexId];
+						finalVertexMap[vertexId] = tempCurrFinalVertexMap[vertexId];
 					}
-
+					delete[] tempPossibleMapSet;
+					delete[] tempCurrFinalVertexMap;
 					return;
 				}
 				else if (progress < 0) { // violating condition, continue for the next try
 					continue;
 				}
 
-				BruteForce(possibleMapSet, currFinalVertexMap);
+				BruteForce(tempPossibleMapSet, tempCurrFinalVertexMap);
 				if (isomorphismFound) {
+					delete[] tempPossibleMapSet;
+					delete[] tempCurrFinalVertexMap;
 					return;
 				}
+				delete[] tempPossibleMapSet;
+				delete[] tempCurrFinalVertexMap;
 			}
 		}
 	}
@@ -742,12 +760,11 @@ bool inVec(vector<int>& v, int e){
 
 bool isoCheck(Graph& g1, Graph&g2, vector<int>&mapping){
 	
-
+	
 	for(int i = 0; i < g1.numberOfVertices; i++){
 		for(int e = 0; e < g1.edges.size(); e++){
 		if(!inVec(g2.edges[mapping[i]],mapping[g1.edges[i][e]])) return false;
 		}
-		
 		
 	}
 	return true;
