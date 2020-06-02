@@ -1,5 +1,9 @@
 # Parallel-Graph-Isomorphism
 
+## Description of Application
+We plan to implement a parallel algorithm to solve the graph isomorphism problem. Informally, graph isomorphism problem is deciding whether two given graphs have the same structure. Given two graphs G1 = (V1,E1) and G2 = (V2,E2), an isomorphism from G1 to G2 is a bijection f : V1 → V2 such that (i,j) ∈ E1 if and only if (f(i),f(j)) ∈ E2. If such an isomorphism exists, the graphs are called isomorphic. Graph isomorphism problem is known to be in NP but not known whether it is NP-complete or in P. Since there is no algorithm to solve the problem in polynomial time, we assume the task is complex enough for our project. 
+	Also, the more general problem of finding isomorphisms in subgraphs is known to be NP-complete, but we are going to focus on graph isomorphism in this project.
+
 ## Algorithm
 Our algorithm is composed of 2 main classes. The first class is called “Graph” which includes information regarding vertices and edges. Also, there is another variable which is the matrix that keeps all the shortest path information from every vertex to every other vertex. The second class is called “GraphMapper” which contains 2 graph objects and a function named “Solve” which tries to find isomorphism between 2 graph object.
 
