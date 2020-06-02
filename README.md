@@ -32,3 +32,6 @@ After the above steps, if we do not find a certain map for all of the vertices, 
 We have so far only used openmp for parallelism. Since we deal with array or matrix structures omp for method is suitable for parallelism. Omp for is used in several functions such as updating the possible matching of each vertex or finding the shortest path. For shortest path finding, inside of setShortestPathAllVertices function that we parallelized, which calculates shortest paths for all vertices in the graph by using Floyd Warshall shortest path algorithm. Shortest paths are calculated for the both graphs which are independent of each other. Therefore we can also parallelize these processes. To achieve parallelization, we divide these processes to separate tasks by using omp task.
  As a future work before the final step, we will also apply parallelism for recursive brute force search where the task parallelism is very applicable for this part. Also, some operations that we do such as ShortestPathFiltering can be parallelised for GPUs.
 
+## Calculation Times and Speedups
+![times](images/times.jpg)
+![speedups](images/speedups.jpg)
