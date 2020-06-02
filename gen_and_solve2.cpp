@@ -14,7 +14,7 @@ extern "C" {
 using namespace std;
 
 //code for measurement
-using clock = std::chrono::system_clock;
+using clock2 = std::chrono::system_clock;
 using ms = std::chrono::duration<double, std::milli>;
 
 
@@ -87,7 +87,7 @@ int main(){
 				relabel(g1,0,perm,g2,m,n);
 				
 				//nauty time measurement
-				const auto before = clock::now();
+				const auto before = clock2::now();
 				densenauty(g1,lab1,ptn,orbits,&options,&stats,m,n,cg1);
 				densenauty(g2,lab2,ptn,orbits,&options,&stats,m,n,cg2);
 				
@@ -95,7 +95,7 @@ int main(){
 				for (k = 0; k < m*(size_t)n; ++k)
 					if (cg1[k] != cg2[k]) break;
 				
-				const ms duration = clock::now() - before;
+				const ms duration = clock2::now() - before;
 				elss <<  n << "v_"<< p1 << "d_" << c << ": " << duration << "\n";
 				fprintf(elapsedf,"#\n");
 				
