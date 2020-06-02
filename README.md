@@ -46,5 +46,7 @@ We have so far only used openmp for parallelism. Since we deal with array or mat
  As a future work before the final step, we will also apply parallelism for recursive brute force search where the task parallelism is very applicable for this part. Also, some operations that we do such as ShortestPathFiltering can be parallelised for GPUs.
 
 ## Calculation Times and Speedups
-![times](images/times.jpeg)
+Speed of the algorithm is improved even more since the progress report. As it can be seen in the graphics below timing results are 100 times are better. 
 ![speedups](images/speedups.jpeg)
+![speedup_final](images/speedup_final.png)
+![times](images/times.jpeg)
