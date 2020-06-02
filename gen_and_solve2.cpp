@@ -9,7 +9,7 @@ extern "C" {
 #include <iostream>
 #include <stdlib.h>
 #include <sstream>
-
+#include <chrono>
 
 using namespace std;
 
@@ -24,7 +24,7 @@ int main(){
 	count = 1;
 	int n_list[3] = {10000,20000,30000};
 	int p1_list[4] = {10,100,1000,5000};
-	string elapsed = "graphs2/nauty_times.txt"
+	string elapsed = "graphs2/nauty_times.txt";
 	FILE * elapsedf = fopen(elapsed.c_str(),"w");
 	
 	//i iterating over n_list, j iterating over p1_list
@@ -96,8 +96,8 @@ int main(){
 					if (cg1[k] != cg2[k]) break;
 				
 				const ms duration = clock2::now() - before;
-				elss <<  n << "v_"<< p1 << "d_" << c << ": " << duration << "\n";
-				fprintf(elapsedf,"#\n");
+				elss <<  n << "v_"<< p1 << "d_" << c << ": " << duration.count() << "\n";
+				fprintf(elapsedf,elss.str().c_str());
 				
 				//nauty time measurement end
 				if (k == m*(size_t)n)
