@@ -46,8 +46,12 @@ We have so far only used openmp for parallelism. Since we deal with array or mat
  As a future work before the final step, we will also apply parallelism for recursive brute force search where the task parallelism is very applicable for this part. Also, some operations that we do such as ShortestPathFiltering can be parallelised for GPUs.
 
 ## Calculation Times and Speedups
-Speed of the algorithm is improved even more since the progress report. First graphic shows the execution time of graphs of 2000/5000/10000/20000/30000 vertices as the number of threads increasing. We have tested the final version of the code under the same conditions to see the progress better. As it can be seen in the graphics below timing results are 100 times are better. Execution time of the algorithm itself is given in detail in the graph below. Average edge number of vertices is 150 in all of these graphs and size of the graphs vary from 2k to 30k.
-|![Execution Time](images/speedup_final_big.jpg) | ![speedup_final](images/speedups_big.png)|
+Speed of the algorithm is improved even more since the progress report. First graphic shows the execution time of graphs of 2000/5000/10000/20000/30000 vertices as the number of threads increasing. We have tested the previous and the final versions of the code under the same conditions to see the progress better. Timing results are 100 times are better. 
+
+Execution time of the algorithm itself is given in detail in the graph below. Average edge number of vertices is 150 in all of these graphs and size of the graphs vary from 2k to 30k. Especially in big size of graphs, change in speed becomes more noticable and remarkable. 
+![Execution Time](images/speedup_final_big.jpg) 
+The speedup graph of the algorithm is given below. The smooth decrease in exection time as the number of threads incresing shows that the algorithm is highly scalable. 
+![speedup_final](images/speedups_big.png)
 
 Also we've compared our algorithm with the nauty algorithm (state-of-art) in bigger graphs. Since density of the graphs affect the speed of the algorithms we had created graphs with same size but different densities. Algorithms are tested on graphs of 10k 20k 30k nodes. Number of neighbours of a node (i.e. density) varies from 10 to 5k. When it comes to sparse graphs our algorithm runs faster than the nauty algorithm. Since nauty algorithm is more suitable for dense graphs, in dense graphs, timing result of our algorithm is not better than the nauty. 
 ![times](images/times.jpeg)
