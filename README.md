@@ -1,5 +1,18 @@
 # Parallel-Graph-Isomorphism
 
+Usage:
+To run an experiment with 10k,20k,30k vertices and 10, 100, 1000, 5000 edges per vertex:
+compile nauty by running make command in nauty26r12
+g++ gen_and_solve2.cpp nauty26r12/nauty.a 
+./a.out 
+You will see the generated graphs at graphs2 dir. Also there will be a file nauty_times.txt with execution times of nauty to solve  the isomorphism. 
+
+To solve an instance of the problem with our code:
+g++ -fopenmp main.cpp graphio.cpp
+./a.out filename (graphs2/20000v_10d_c1.txt) vertexcount (20000) ---------> v : vertex, d : edge per vertex, c: graphnum (first such graph, second such graph etc)
+ex: ./a.out graphs2/20000v_10d_c1.txt 20000
+
+
 ## Description of Application
 We plan to implement a parallel algorithm to solve the graph isomorphism problem. Informally, graph isomorphism problem is deciding whether two given graphs have the same structure. Given two graphs G<sub>1</sub> = (V<sub>1</sub>,E<sub>1</sub>) and G<sub>2</sub> = (V<sub>2</sub>,E<sub>2</sub>), an isomorphism from G<sub>1</sub> to G<sub>2</sub> is a bijection f : V<sub>1</sub> → V<sub>2</sub> such that (i,j) ∈ E<sub>1</sub> if and only if (f(i),f(j)) ∈ E<sub>2</sub>. If such an isomorphism exists, the graphs are called isomorphic. Graph isomorphism problem is known to be in NP but not known whether it is NP-complete or in P. Since there is no algorithm to solve the problem in polynomial time, we assume the task is complex enough for our project. 
 	Also, the more general problem of finding isomorphisms in subgraphs is known to be NP-complete, but we are going to focus on graph isomorphism in this project.
@@ -29,7 +42,7 @@ If the above equality holds, vertex3 and vertex4 remain as possible mapping. Oth
 After the above steps, if we do not find a certain map for all of the vertices, we go for the exhaustive search and try some possible mapping as if they are certain. While we are doing this, we copy all the information about possible mappings to a temporary variable and move forward with this temporary variable. After we try a map, we call again the shortest path filter at each try. After the shortest path filter, we check whether the current condition of the graph is violating isomorphism or not. Since the shortest path filter eliminates some of the mapping which are not possible, we may remain with a vertex of graph 1 which does not have any possible map. In such a case, we say the current try fails. Otherwise, if it does not violate isomorphism, we go on trying new possible mappings as a recursive call. In the end, as a root condition of a recursive call, if it does not violate isomorphism after trying all the mappings, this means we reach a solution. Then, we set this final state to a variable called “finalVertexMap” of the “GraphMapper” class.
 
 ## Parallelism
-We have so far only used openmp for parallelism. Since we deal with array or matrix structures omp for method is suitable for parallelism. Omp for is used in several functions such as updating the possible matching of each vertex or finding the shortest path. For shortest path finding, inside of setShortestPathAllVertices function that we parallelized, which calculates shortest paths for all vertices in the graph by using Floyd Warshall shortest path algorithm. Shortest paths are calculated for the both graphs which are independent of each other. Therefore we can also parallelize these processes. To achieve parallelization, we divide these processes to separate tasks by using omp task.
+We have so far only used openmp for parallelism. Since we deal with array or matrix structures omp for method is suitable for parallelism. Omp for is used in several functions such as updating the possible matching of each vertex or finding the shortest path. For shortest path finding, inside of setShortestPathAllVertices function that we parallelized, which calculates shortest paths for all vertices in the graph by using breadth first seatch. Shortest paths are calculated for the both graphs which are independent of each other. Therefore we can also parallelize these processes. To achieve parallelization, we divide these processes to separate tasks by using omp task.
  As a future work before the final step, we will also apply parallelism for recursive brute force search where the task parallelism is very applicable for this part. Also, some operations that we do such as ShortestPathFiltering can be parallelised for GPUs.
 
 ## Calculation Times and Speedups
