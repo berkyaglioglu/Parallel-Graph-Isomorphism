@@ -44,8 +44,27 @@ public:
 		int curr_vertex;
 		queue.push_back(vertex);
 		shortestPathAllVertices[vertex][vertex] = 0;
-		
-		for (int i=0; i < queue.size(); i++) {
+        // #pragma omp parallel
+        // for (int i=0; i < queue.size(); i++) {
+        //     // #pragma omp critical
+        //     // {
+        //     //     curr_vertex = queue.front();
+        //     //     queue.erase(queue.begin());
+        //     // }
+        //     #pragma omp atomic read
+        //     curr_vertex = queue[i];
+        //     //#pragma omp for private(curr_vertex)
+        //     for (int j=0; j < edges[curr_vertex].size(); j++) {
+        //         if (shortestPathAllVertices[vertex][edges[curr_vertex][j]] == -1) {
+        //             #pragma omp critical
+        //             {
+        //                 queue.push_back(edges[curr_vertex][j]);
+        //                 shortestPathAllVertices[vertex][edges[curr_vertex][j]] = shortestPathAllVertices[vertex][curr_vertex] + 1;
+        //             }
+        //         }
+        //     }
+        // }
+        for (int i=0; i < queue.size(); i++) {
 			curr_vertex = queue[i];
 			for (int j=0; j < edges[curr_vertex].size(); j++) {
 				if (shortestPathAllVertices[vertex][edges[curr_vertex][j]] == -1) {
@@ -54,6 +73,7 @@ public:
 				}
 			}
 		}
+    
 	}
 
 };
@@ -194,59 +214,39 @@ public:
 
 		for (int vertexIdG2 = 0; vertexIdG2 < numberOfVertices; vertexIdG2++) {
 			if (possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] == '1') {
-				char * tempPossibleMapSet = new char[numberOfVertices*numberOfVertices];
-				int * tempCurrFinalVertexMap = new int[numberOfVertices];
-				for (int i = 0; i < numberOfVertices; i++) {
-					tempCurrFinalVertexMap[i] = currFinalVertexMap[i];
-					for(int j = 0; j < numberOfVertices; j++) {
-						if (i == vertexIdG1) {
-							tempPossibleMapSet[i*numberOfVertices + j] = '0';
-						}
-						else {
-							tempPossibleMapSet[i*numberOfVertices + j] = possibleMapSet[i*numberOfVertices + j];
-						}
-					}
-				}
 
-				tempPossibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = '1';
-				tempCurrFinalVertexMap[vertexIdG1] = vertexIdG2;
+				possibleMapSet[vertexIdG1*numberOfVertices + vertexIdG2] = '1';
+				currFinalVertexMap[vertexIdG1] = vertexIdG2;
 
-				ShortestPathFilter(tempPossibleMapSet, tempCurrFinalVertexMap, vertexIdG1);
-				progress = Process(tempPossibleMapSet, tempCurrFinalVertexMap);
+				ShortestPathFilter(possibleMapSet, currFinalVertexMap, vertexIdG1);
+				progress = Process(possibleMapSet, currFinalVertexMap);
 				
 				if (progress == numberOfVertices) {
 					isomorphismFound = true;
 					for (int vertexId = 0; vertexId < numberOfVertices; vertexId++) {
-						if (tempCurrFinalVertexMap[vertexId] == -1) {
+						if (currFinalVertexMap[vertexId] == -1) {
 							int onlyMap;
 							for (int i = 0; i < numberOfVertices; i++) {
-								if (tempPossibleMapSet[vertexId*numberOfVertices + i] == '1') {
+								if (possibleMapSet[vertexId*numberOfVertices + i] == '1') {
 									onlyMap = i;
 									break;
 								}
 							}
 							finalVertexMap[vertexId] = onlyMap;
 						}
-						finalVertexMap[vertexId] = tempCurrFinalVertexMap[vertexId];
+						finalVertexMap[vertexId] = currFinalVertexMap[vertexId];
 					}
-					delete[] tempPossibleMapSet;
-					delete[] tempCurrFinalVertexMap;
+
 					return;
 				}
 				else if (progress < 0) { // violating condition, continue for the next try
-					delete[] tempPossibleMapSet;
-					delete[] tempCurrFinalVertexMap;
 					continue;
 				}
 
-				BruteForce(tempPossibleMapSet, tempCurrFinalVertexMap);
+				BruteForce(possibleMapSet, currFinalVertexMap);
 				if (isomorphismFound) {
-					delete[] tempPossibleMapSet;
-					delete[] tempCurrFinalVertexMap;
 					return;
 				}
-				delete[] tempPossibleMapSet;
-				delete[] tempCurrFinalVertexMap;
 			}
 		}
 	}
@@ -283,30 +283,34 @@ public:
 		
 
 		char * possibleMapSet = new char[numberOfVertices*numberOfVertices];
+        #pragma omp parallel for shared(possibleMapSet)
 		for (int i = 0; i < numberOfVertices*numberOfVertices; i++) {
 			possibleMapSet[i] = '0';
 		}
 		//possibleMapSet set et
 		vector<int> verticesG1;
 		vector<int> verticesG2;
-		for (mapItr = degreeVerticesTable.begin(); mapItr != degreeVerticesTable.end(); mapItr++) {
-			verticesG1 = (mapItr->second).first;
-			verticesG2 = (mapItr->second).second;
-			if (verticesG1.size() == verticesG2.size()) {
-				for (int i = 0; i < verticesG1.size(); i++) {
-					for (int j = 0; j < verticesG2.size(); j++) {
-						possibleMapSet[verticesG1[i]*numberOfVertices + verticesG2[j]] = '1';
-					}
-				}
-			}
-			else {
-				delete[] possibleMapSet;
-				cout << "There are different number of vertices with the same degree." << endl;
-				return;
-			}
-		}
-
+        
+        for (mapItr = degreeVerticesTable.begin(); mapItr != degreeVerticesTable.end(); mapItr++) {
+            verticesG1 = (mapItr->second).first;
+            verticesG2 = (mapItr->second).second;
+            if (verticesG1.size() == verticesG2.size()) {
+                #pragma omp parallel for collapse(2) shared(possibleMapSet)
+                for (int i = 0; i < verticesG1.size(); i++) {
+                    for (int j = 0; j < verticesG2.size(); j++) {
+                        possibleMapSet[verticesG1[i]*numberOfVertices + verticesG2[j]] = '1';
+                    }
+                } 
+            }
+            else {
+                delete[] possibleMapSet;
+                cout << "There are different number of vertices with the same degree." << endl;
+                return;
+            }
+        }
+		
 		int * currFinalVertexMap = new int[numberOfVertices];
+        #pragma omp parallel for shared(currFinalVertexMap)
 		for (int i = 0; i < numberOfVertices; i++) {
 			currFinalVertexMap[i] = -1;
 		}
