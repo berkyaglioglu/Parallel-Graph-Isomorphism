@@ -1,16 +1,16 @@
 # Parallel-Graph-Isomorphism
 
-Usage:
-To run an experiment with 10k,20k,30k vertices and 10, 100, 1000, 5000 edges per vertex:
-compile nauty by running make command in nauty26r12
-g++ gen_and_solve2.cpp nauty26r12/nauty.a 
-./a.out 
-You will see the generated graphs at graphs2 dir. Also there will be a file nauty_times.txt with execution times of nauty to solve  the isomorphism. 
+### Usage:
+To run an experiment with 10k,20k,30k vertices and 10, 100, 1000, 5000 edges per vertex: <br/>
+compile nauty by running make command in nauty26r12 <br/>
+g++ gen_and_solve2.cpp nauty26r12/nauty.a  <br/>
+./a.out <br/>
+You will see the generated graphs at graphs2 dir. Also there will be a file nauty_times.txt with execution times of nauty to solve  the isomorphism. <br/>
 
-To solve an instance of the problem with our code:
-g++ -fopenmp main.cpp graphio.cpp
-./a.out filename (graphs2/20000v_10d_c1.txt) vertexcount (20000) ---------> v : vertex, d : edge per vertex, c: graphnum (first such graph, second such graph etc)
-ex: ./a.out graphs2/20000v_10d_c1.txt 20000
+To solve an instance of the problem with our code:<br/>
+g++ -fopenmp main.cpp graphio.cpp<br/>
+./a.out filename (graphs2/20000v_10d_c1.txt) vertexcount (20000) ---------> v : vertex, d : edge per vertex, c: graphnum (first such graph, second such graph etc)<br/>
+ex: ./a.out graphs2/20000v_10d_c1.txt 20000<br/>
 
 
 ## Description of Application
