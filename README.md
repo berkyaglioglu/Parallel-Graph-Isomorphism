@@ -1,8 +1,15 @@
 # Parallel-Graph-Isomorphism
 
 ## Description of Application
-We plan to implement a parallel algorithm to solve the graph isomorphism problem. Informally, graph isomorphism problem is deciding whether two given graphs have the same structure. Given two graphs G1 = (V1,E1) and G2 = (V2,E2), an isomorphism from G1 to G2 is a bijection f : V1 → V2 such that (i,j) ∈ E1 if and only if (f(i),f(j)) ∈ E2. If such an isomorphism exists, the graphs are called isomorphic. Graph isomorphism problem is known to be in NP but not known whether it is NP-complete or in P. Since there is no algorithm to solve the problem in polynomial time, we assume the task is complex enough for our project. 
+We plan to implement a parallel algorithm to solve the graph isomorphism problem. Informally, graph isomorphism problem is deciding whether two given graphs have the same structure. Given two graphs G<sub>1</sub> = (V<sub>1</sub>,E<sub>1</sub>) and G<sub>2</sub> = (V<sub>2</sub>,E<sub>2</sub>), an isomorphism from G<sub>1</sub> to G<sub>2</sub> is a bijection f : V<sub>1</sub> → V<sub>2</sub> such that (i,j) ∈ E<sub>1</sub> if and only if (f(i),f(j)) ∈ E<sub>2</sub>. If such an isomorphism exists, the graphs are called isomorphic. Graph isomorphism problem is known to be in NP but not known whether it is NP-complete or in P. Since there is no algorithm to solve the problem in polynomial time, we assume the task is complex enough for our project. 
 	Also, the more general problem of finding isomorphisms in subgraphs is known to be NP-complete, but we are going to focus on graph isomorphism in this project.
+	
+## Data and Model Description
+Graph isomorphism simply means that there is bijection between given graphs. In other words, each node can be assigned to a node in the other graph while preserving all its connection and edge features. In our model we aim to evaluate the existence of the bijection function between two graphs. Since adjacency matrices contain all the information about the graph, they are one of the most suitable structures to represent and compare graphs.
+Adjacency matrix is an nxn matrix, where n is the number of nodes in the graph, to represent finite graphs. In the matrix columns and rows are labeled with the vertices. For a simple graph, elements of the graph are assigned to either 1 or 0. If there exists a path from vertex v<sub></sub> to vertex v<sub>j</sub> then the corresponding matrix element a<sub>ij</sub>= 1. Otherwise a<sub>ij</sub>= 0. 
+
+Since the graphs we will work on can get big, we wanted to cut corners with memory usage and use a vector of vectors to hold graph information. It is a list of edges from each vertex. 
+
 
 ## Algorithm
 Our algorithm is composed of 2 main classes. The first class is called “Graph” which includes information regarding vertices and edges. Also, there is another variable which is the matrix that keeps all the shortest path information from every vertex to every other vertex. The second class is called “GraphMapper” which contains 2 graph objects and a function named “Solve” which tries to find isomorphism between 2 graph object.
