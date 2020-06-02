@@ -361,6 +361,25 @@ public:
 };
 
 
+bool inVec(vector<int> * v, int e){
+	for(int i=0; i< v.size(); i++){
+		if(v[i] == e) return true;
+		
+	}
+	return false;
+}
+
+bool isoCheck(Graph& g1, Graph&g2, vector<int>*mapping){
+	
+	
+	for(int i = 0; i < g1.numVertices; i++){
+		for(int e = 0; e < g1.edges.size(); e++){
+			if(!inVec(g2.edges[mappping[i]],mapping(g1.edges[i][j]))) return false;
+		}
+		
+	}
+	return true;
+}
 
 
 int main(int argc,char* argv[])
@@ -395,6 +414,7 @@ int main(int argc,char* argv[])
 	if (graphMapper.isomorphismFound) {
 		// show solution in output file by using graphMapper.vertexMap
 		cout << "Isomorphism found" << endl;
+		cout << isoCheck(g1,g2,graphMapper.finalVertexMap) << endl;
 		/*
 		for(int i = 0; i < graphMapper.finalVertexMap.size(); i++)
 			cout << graphMapper.finalVertexMap[i] << " ";
